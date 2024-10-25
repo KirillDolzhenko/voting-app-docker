@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  # Сервис базы данных PostgreSQL
+  db:
+    container_name: postgres-db
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: votify
+    ports:
+      - "5432:5432" # Локальный порт 5432 будет проброшен в контейнер на порт 5432
+    # volumes:
+    #   - db-data:/var/lib/postgresql/data # Проброс данных БД в локальную директорию
+    networks:
+      - app-network
+
+  # Сервис для фронтенда на React
+  frontend:
+    container_name: react-app
+    build:
+      context: ./votify_frontend # путь к папке с вашим приложением React
+      dockerfile: Dockerfile
+    ports:
+      - "4001:4001" # Локальный порт 4001 будет проброшен в контейнер на порт 4001
+    # environment:
+    #   - CHOKIDAR_USEPOLLING=true # Полезно для разработки в контейнере
+    # volumes:
+    #   - ./frontend:/app # Проброс папки для живого обновления кода в контейнере
+    #   - /app/node_modules # Исключаем node_modules, чтобы они не пробрасывались
+    depends_on:
+      - backend # Указываем, что frontend зависит от backend
+    networks:
+      - app-network
+
+  # Сервис для бэкенда на NestJS
+  backend:
+    container_name: nestjs-app
+    build:
+      context: ./votify_backend # путь к папке с вашим приложением NestJS
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000" # Локальный порт 4000 будет проброшен в контейнер на порт 4000
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/votify
+    # volumes:
+    #   - ./backend:/app # Проброс папки для живого обновления кода в контейнере
+    #   - /app/node_modules # Исключаем node_modules, чтобы они не пробрасывались
+    depends_on:
+      - db # Указываем, что backend зависит от postgres
+    networks:
+      - app-network
+    command:
+      [
+        "sh",
+        "-c",
+        "until nc -z db 5432; do sleep 1; done; npx prisma migrate dev; npm run start",
+      ]
+
+# Определяем volumes и сеть
+volumes:
+  db-data:
+
+networks:
+  app-network:
+    driver: bridge
