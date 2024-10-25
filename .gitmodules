@@ -1,6 +1,6 @@
 [submodule "votify_backend"]
-    path = votify_backend
-    url = https://github.com/yourusername/voting-app-backend.git
+	path = votify_backend
+	url = https://github.com/KirillDolzhenko/voting-app-backend.git
 [submodule "votify_frontend"]
-    path = votify_frontend
-    url = https://github.com/yourusername/voting-app-frontend.git
+	path = votify_frontend
+	url = https://github.com/KirillDolzhenko/voting-app-frontend.git
